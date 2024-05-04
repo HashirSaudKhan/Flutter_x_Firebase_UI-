@@ -1,20 +1,84 @@
+// ignore_for_file: avoid_print, use_build_context_synchronously
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:modernlogintute/components/my_button.dart';
 import 'package:modernlogintute/components/my_textfield.dart';
 import 'package:modernlogintute/components/square_tile.dart';
 
-class LoginPage extends StatelessWidget {
-  LoginPage({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
   // text editing controllers
-  final usernameController = TextEditingController();
+  final emailController = TextEditingController();
+
   final passwordController = TextEditingController();
 
   // sign user in method
-  void signUserIn() {}
+  Future<void> signUserIn() async {
+    //print('Sign in function calling');
+    //show loading circle
+    showDialog(
+        context: context,
+        builder: (context) {
+          return Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 6,
+              color: Colors.black,
+              backgroundColor: Colors.grey.shade200,
+            ),
+          );
+        });
+
+    // wrong email popup
+    wrongEmailmsg() {
+      showDialog(
+          context: context,
+          builder: (context) {
+            return const AlertDialog(
+              title: Text('Wrong Email'),
+            );
+          });
+    }
+
+    // wrong email popup
+    wrongPasswordmsg() {
+      showDialog(
+          context: context,
+          builder: (context) {
+            return const AlertDialog(
+              title: Text('Worng Password'),
+            );
+          });
+    }
+
+    //try sign in
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text,
+        password: passwordController.text,
+      );
+      // pop the loading circle
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      Navigator.pop(context);
+      if (e.code == 'user-not-found') {
+        print('No user found for that email.');
+        wrongEmailmsg();
+      } else if (e.code == 'wrong-password') {
+        print('Wrong password provided for that user.');
+        wrongPasswordmsg();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    //print('build');
     return Scaffold(
       backgroundColor: Colors.grey[300],
       body: SafeArea(
@@ -44,10 +108,10 @@ class LoginPage extends StatelessWidget {
 
                 const SizedBox(height: 25),
 
-                // username textfield
+                // Email textfield
                 MyTextField(
-                  controller: usernameController,
-                  hintText: 'Username',
+                  controller: emailController,
+                  hintText: 'Email',
                   obscureText: false,
                 ),
 
@@ -57,7 +121,7 @@ class LoginPage extends StatelessWidget {
                 MyTextField(
                   controller: passwordController,
                   hintText: 'Password',
-                  obscureText: true,
+                  obscureText: false,
                 ),
 
                 const SizedBox(height: 10),
